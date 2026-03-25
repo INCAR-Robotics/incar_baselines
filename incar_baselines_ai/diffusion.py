@@ -182,7 +182,7 @@ class DiffusionConfig(PolicyConfig):
             )
         
     def get_default_optimizer(self):
-        from incar_baselines_ai.optimizers import AdamConfig
+        from incar.extensions.native.optimizers import AdamConfig
         return AdamConfig(
             lr = 1e-4,
             betas = (0.95, 0.999),
@@ -191,7 +191,7 @@ class DiffusionConfig(PolicyConfig):
         )
     
     def get_default_scheduler(self):
-        from incar_baselines_ai.schedulers import DiffuserSchedulerConfig
+        from incar.extensions.native.schedulers import DiffuserSchedulerConfig
         return DiffuserSchedulerConfig(
             name="cosine",
             num_warmup_steps=500
@@ -255,9 +255,6 @@ class DiffusionPolicy(BasePolicy):
 
     def get_optim_params(self):
         return self.diffusion.parameters()
-    
-    def select_action(self, batch):
-        return super().select_action(batch)
 
     def get_preprocessed_batch(self) -> dict[str, torch.Tensor]:
         # make shallow copy

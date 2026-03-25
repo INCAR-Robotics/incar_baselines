@@ -184,7 +184,7 @@ class ACTConfig(PolicyConfig):
         )
     
     def get_default_optimizer(self):
-        from incar_baselines_ai.optimizers import AdamWConfig
+        from incar.extensions.native.optimizers import AdamWConfig
         return AdamWConfig(
             lr = 1e-5,
             weight_decay= 1e-4 
