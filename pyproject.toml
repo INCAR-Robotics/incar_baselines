@@ -1,0 +1,14 @@
+
+[project]
+name = "incar_baselines"
+version = "0.0.1"
+dependencies = [
+    "diffusers",
+    "einops"
+]
+
+[tool.setuptools]
+packages = ["incar_baselines_ai"]
+
+[project.entry-points.'incar_extensions.ai']
+a = 'incar_baselines_ai'
