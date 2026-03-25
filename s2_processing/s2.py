@@ -9,7 +9,7 @@ import av
 import numpy as np
 from PIL import Image
 import torch
-import tqdm
+from tqdm import tqdm
 if TYPE_CHECKING:
     import cv2
 
@@ -43,7 +43,7 @@ class DepthAnythingV3(ProcessStep):
         self.model = DepthAnything3.from_pretrained(self.model_id)
         self.model = self.model.to(device).eval()
 
-    def process(self, root_path, config):        
+    def process_dataset(self, root_path, config):        
         demos = [ f.name for f in os.scandir(root_path) if f.is_dir()]
         demos = sorted(demos, key=lambda x: int(x.split('_')[-1]))
 
@@ -125,7 +125,7 @@ class DepthAnythingV3(ProcessStep):
             frame[self.target_feature_name] = torch.tensor(self.operation(np.array(frame[self.source_feature_name])))
 
     def operation(self, image: np.ndarray) -> np.ndarray:
-        depth =  self.model.inference(image)
+        depth =  self.model.inference([image]).depth[0]
         # print("max depth: ", np.max(depth))
         # print("min depth: ", np.min(depth))
         if self.max_depth_value != 0:
@@ -135,134 +135,6 @@ class DepthAnythingV3(ProcessStep):
             depth = depth.astype(int)
         depth = np.repeat(depth[..., np.newaxis], 3, axis=-1)
         return depth
-
-
-# @ProcessStep.register_subclass("depth_anything")
-# @dataclass
-# class DepthAnything(ProcessStep):
-#     source_feature_name: str = ""
-#     target_feature_name: str = ""
-#     max_depth_value: int = 0
-
-#     checkpoint_dir: str = ""
-#     encoder: str = "vitl"
-
-#     hooks: List[ProcessHook] = field(default_factory = lambda: [ProcessHook.DATASET, ProcessHook.OBSERVATION])
-
-#     def __post_init__(self):
-#         try:
-#             from depth_anything_v2.dpt import DepthAnythingV2
-#         except ImportError:
-#             raise ImportError("Depth anything is not installed.")
-        
-#         model_configs = {
-#             'vits': {'encoder': 'vits', 'features': 64, 'out_channels': [48, 96, 192, 384]},
-#             'vitb': {'encoder': 'vitb', 'features': 128, 'out_channels': [96, 192, 384, 768]},
-#             'vitl': {'encoder': 'vitl', 'features': 256, 'out_channels': [256, 512, 1024, 1024]},
-#             'vitg': {'encoder': 'vitg', 'features': 384, 'out_channels': [1536, 1536, 1536, 1536]}
-#         }
-
-#         if self.encoder not in model_configs.keys():
-#             raise ValueError(f"{self.encoder} is not a valid encoder. Valid models are {model_configs.keys()}")
-        
-#         device = 'cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu'
-
-#         self.model = DepthAnythingV2(**model_configs[self.encoder])
-#         self.model.load_state_dict(torch.load(self.checkpoint_dir / f"depth_anything_v2_{self.encoder}.pth", map_location='cpu'))
-#         self.model = self.model.to(device).eval()
-
-#     def process(self, root_path, config):        
-#         demos = [ f.name for f in os.scandir(root_path) if f.is_dir()]
-#         demos = sorted(demos, key=lambda x: int(x.split('_')[-1]))
-
-#         if config.features[self.source_feature_name].type != FeatureType.VISUAL:
-#             raise AssertionError(f"feature {self.source_feature_name} is not of type VISUAL, which is expected for grounded SAM")
-        
-#         config.features[self.target_feature_name] = config.features[self.source_feature_name]
-
-#         max_global_depth = 0
-#         for demo in tqdm(demos, desc="Depth Anything first pass"):
-#             source_feature_path = Path(root_path) / demo / self.source_feature_name
-#             container = av.open(source_feature_path / "data.mp4")
-#             frames = []
-#             for frame in container.decode():
-#                 frames.append(frame.to_ndarray(format='rgb24'))
-#             container.close()
-
-#             processed_frames = []
-#             for i, frame in enumerate(frames):
-#                 depth = self.operation(frame)
-#                 processed_frames.append(depth)
-
-#             max_frame_depth = np.max(np.array(processed_frames))
-#             max_global_depth = max(max_global_depth, max_frame_depth)
-
-#         self.max_depth_value = int(max_global_depth) + 1
-#         print(f"anydepth max depth: {self.max_depth_value}")
-            
-#         for demo in tqdm(demos, desc="Depth Anything second pass"):
-#             source_feature_path = Path(root_path) / demo / self.source_feature_name
-#             target_feature_path = Path(root_path) / demo / self.target_feature_name
-
-#             container = av.open(source_feature_path / "data.mp4")
-#             frames = []
-#             for frame in container.decode():
-#                 frames.append(frame.to_ndarray(format='rgb24'))
-#             container.close()
-
-#             processed_frames = []
-#             for i, frame in enumerate(frames):
-#                 depth = self.operation(frame)
-#                 processed_frames.append(depth)
-
-#             os.mkdir(target_feature_path)
-#             container = av.open(target_feature_path / "data.mp4", 'w')
-#             stream = container.add_stream('libx264', fractions.Fraction(config.video_fps))
-#             stream.height = frames[0].shape[0]
-#             stream.width = frames[0].shape[1]
-
-#             # Add all frames
-#             for i, frame in enumerate(processed_frames):
-#                 video_frame = av.VideoFrame.from_ndarray(frame, format="rgb24")
-#                 video_frame.pts = i
-#                 video_frame.time_base = fractions.Fraction(1, config.video_fps)
-#                 for packet in stream.encode(video_frame):
-#                     container.mux(packet)
-#             # Add ending frame
-#             for packet in stream.encode(None):
-#                 container.mux(packet)
-#             container.close()
-
-#             data = np.array(processed_frames)
-#             with open(Path(root_path) / demo / DEMO_META_NAME, "r") as f:
-#                 demo_meta = json.load(f)
-#             demo_meta["statistics"][self.target_feature_name] = serialize_dict({
-#                 "min": np.min(data, axis=(0, 1, 2), keepdims=True),
-#                 "max": np.max(data, axis=(0, 1, 2), keepdims=True),
-#                 "mean": np.mean(data, axis=(0, 1, 2), keepdims=True),
-#                 "std": np.std(data, axis=(0, 1, 2), keepdims=True),
-#                 "count": np.array([len(data)]),
-#             })
-#             with open(Path(root_path) / demo / DEMO_META_NAME, "w") as f:
-#                 f.write(json.dumps(demo_meta))
-
-#     def process_single_frame(self, frame):
-#         if frame[self.source_feature_name].shape[0] == 3:
-#             frame[self.target_feature_name] = torch.tensor(self.operation(np.array(frame[self.source_feature_name]).transpose(1, 2, 0))).permute(2,0,1)
-#         else:
-#             frame[self.target_feature_name] = torch.tensor(self.operation(np.array(frame[self.source_feature_name])))
-
-#     def operation(self, image: np.ndarray) -> np.ndarray:
-#         depth =  self.model.infer_image(image)
-#         # print("max depth: ", np.max(depth))
-#         # print("min depth: ", np.min(depth))
-#         if self.max_depth_value != 0:
-#             depth = depth * 255 / self.max_depth_value
-#             depth = depth.astype(np.uint8)
-#         else:
-#             depth = depth.astype(int)
-#         depth = np.repeat(depth[..., np.newaxis], 3, axis=-1)
-#         return depth
 
 
 @ProcessStep.register_subclass("grounded_SAM")
@@ -282,7 +154,7 @@ class GroundedSAM(ProcessStep):
     replace_inverse_mask_color: bool = True
     mask_dilation_pixels: int = 5
 
-    sam2_model_id: str = ""
+    sam2_model_id: str = "facebook/sam2-hiera-large"
     grounding_dino_model_id: str = "IDEA-Research/grounding-dino-tiny"
 
     hooks: List[ProcessHook] = field(default_factory = lambda: [ProcessHook.DATASET, ProcessHook.OBSERVATION])
@@ -316,6 +188,7 @@ class GroundedSAM(ProcessStep):
             "pip install incar_baselines[s2]@git+https://github.com/INCAR-Robotics/incar_baselines")
         try:
             import cv2
+            self.cv2 = cv2
         except ImportError:
             raise ImportError("OpenCV is not installed, which is required for the Grounded SAM processing step. Please install it with 'pip install opencv-python'")
         from transformers import AutoProcessor, AutoModelForZeroShotObjectDetection
@@ -331,7 +204,7 @@ class GroundedSAM(ProcessStep):
 
         self.kernel = np.ones((self.mask_dilation_pixels, self.mask_dilation_pixels), np.uint8)
 
-    def process(self, root_path, config):
+    def process_dataset(self, root_path, config):
         if config.features[self.source_feature_name].type != FeatureType.VISUAL:
             raise AssertionError(f"feature {self.source_feature_name} is not of type VISUAL, which is expected for grounded SAM")
         
@@ -387,10 +260,8 @@ class GroundedSAM(ProcessStep):
                 f.write(json.dumps(demo_meta))
 
     def operation(self, image: np.ndarray) -> np.ndarray:
-        # print(image.shape)
-        # print(image)
+        cv2 = self.cv2
         image = self._to_pil_rgb(image)
-        # image = Image.fromarray(image)
 
         self.sam2_predictor.set_image(image)
         inputs = self.processor(images=image, text=self.prompt, return_tensors="pt").to("cuda")
@@ -459,11 +330,6 @@ class GroundedSAM(ProcessStep):
         out = self.operation(src)                # returns numpy uint8 HWC (or convert inside)
         frame[self.target_feature_name] = torch.from_numpy(out).permute(2, 0, 1)
 
-    # def process_single_frame(self, frame: dict[str, Union[np.ndarray, torch.Tensor]]):
-    #     if frame[self.source_feature_name].shape[0] == 3:
-    #         frame[self.target_feature_name] = torch.tensor(self.operation(np.array(frame[self.source_feature_name]).transpose(1, 2, 0))).permute(2,0,1)
-    #     else:
-    #         frame[self.target_feature_name] = torch.tensor(self.operation(np.array(frame[self.source_feature_name])))
 
 @ProcessStep.register_subclass("combine_single_channels")
 @dataclass
@@ -479,7 +345,7 @@ class CombineSingleChannels(ProcessStep):
     def __post_init__(self):
         self.has_third_feature = self.third_feature is not None and self.third_feature != ""
     
-    def process(self, root_path, config):
+    def process_dataset(self, root_path, config):
         if config.features[self.first_feature] != config.features[self.second_feature]:
             raise Exception("Trying to combine single channels of features with different shapes")
         if self.has_third_feature and (config.features[self.first_feature] != config.features[self.third_feature]):
