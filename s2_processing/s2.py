@@ -35,7 +35,8 @@ class DepthAnythingV3(ProcessStep):
         try:
             from depth_anything_3.api import DepthAnything3
         except ImportError:
-            raise ImportError("Depth anything is not installed.")
+            raise ImportError("Depth anything is not installed. Please install the S2 baseline dependencies with the following command: \n" \
+            "pip install incar_baselines[s2]@git+https://github.com/INCAR-Robotics/incar_baselines")
 
         device = 'cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu'
 
@@ -311,7 +312,8 @@ class GroundedSAM(ProcessStep):
         try:
             from sam2.sam2_image_predictor import SAM2ImagePredictor
         except ImportError:
-            raise ImportError("SAM2 is not installed")
+            raise ImportError("SAM2 is not installed. Please install the S2 baseline dependencies with the following command: \n" \
+            "pip install incar_baselines[s2]@git+https://github.com/INCAR-Robotics/incar_baselines")
         try:
             import cv2
         except ImportError:
