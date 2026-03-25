@@ -7,8 +7,18 @@ dependencies = [
     "einops"
 ]
 
+[project.optional-dependencies]
+s2 = [
+    "depth_anything_3@git+https://github.com/ByteDance-Seed/Depth-Anything-3",
+    "sam2",
+    "python-opencv"
+]
+
 [tool.setuptools]
-packages = ["incar_baselines_ai"]
+packages = ["incar_baselines_ai", "s2_processing"]
+
+[project.entry-points.'incar_extensions.processing']
+s2_processing = 's2_processing'
 
 [project.entry-points.'incar_extensions.ai']
-a = 'incar_baselines_ai'
+incar_baselines_ai = 'incar_baselines_ai'
