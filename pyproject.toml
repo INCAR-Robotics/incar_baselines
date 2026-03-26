@@ -11,7 +11,8 @@ dependencies = [
 s2 = [
     "depth_anything_3@git+https://github.com/ByteDance-Seed/Depth-Anything-3",
     "sam2",
-    "opencv-python"
+    "opencv-python",
+    "transformers"
 ]
 
 [tool.setuptools]
