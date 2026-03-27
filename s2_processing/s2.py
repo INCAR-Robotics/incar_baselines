@@ -125,7 +125,9 @@ class DepthAnythingV3(ProcessStep):
             frame[self.target_feature_name] = torch.tensor(self.operation(np.array(frame[self.source_feature_name])))
 
     def operation(self, image: np.ndarray) -> np.ndarray:
+        original_shape = image.shape
         depth =  self.model.inference([image]).depth[0]
+        depth = np.array(Image.fromarray(depth).resize((original_shape[1], original_shape[0]), resample=Image.BILINEAR))
         # print("max depth: ", np.max(depth))
         # print("min depth: ", np.min(depth))
         if self.max_depth_value != 0:
@@ -277,6 +279,7 @@ class GroundedSAM(ProcessStep):
 
         input_boxes = grounding_results[0]["boxes"].cpu().numpy()
         if input_boxes.size == 0:
+            print("No boxes found for prompt: ", self.prompt)
             return self.nothing_found_frame(image)
         # TODO: filter boxes
 
@@ -445,7 +448,7 @@ class CombineSingleChannels(ProcessStep):
                     third_feature,
                 )
             )
-    
+
     def operation(self, first, second, third):
         first[:,:,0] = second[:,:,0]
         if third is not None:
