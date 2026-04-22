@@ -1,0 +1,1 @@
+The GR00T integration into the INCAR stack is done using a policy client provided by NVIDIA, which comes with it's own license

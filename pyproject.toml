@@ -1,7 +1,7 @@
 
 [project]
 name = "incar_baselines"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
     "diffusers",
     "einops"
@@ -14,12 +14,17 @@ s2 = [
     "opencv-python",
     "transformers"
 ]
+gr00t = [
+    "zmq",
+    "msgpack"
+]
 
 [tool.setuptools]
-packages = ["incar_baselines_ai", "s2_processing"]
+packages = ["incar_baselines_ai", "s2_processing", "gr00t"]
 
 [project.entry-points.'incar_extensions.processing']
 s2_processing = 's2_processing'
 
 [project.entry-points.'incar_extensions.ai']
 incar_baselines_ai = 'incar_baselines_ai'
+gr00t = 'gr00t'
