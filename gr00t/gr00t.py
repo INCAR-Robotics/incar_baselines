@@ -6,6 +6,7 @@ from typing import Dict
 import numpy as np
 import torch
 from incar.extensions.ai import BasePolicy, LRSchedulerConfig, OptimizerConfig, PolicyConfig, NormalizationMode
+from incar.extensions.ai import PolicyClientMarker
 from incar.common import FeatureType, ProcessHook
 
 from .nvidia.policy_client import PolicyClient
@@ -18,6 +19,7 @@ class GROOTPolicyConfig(PolicyConfig):
     # or during training, values can be overriden with flags, e.g. --policy.device = "cpu"
     dt: float = 0.1
     port: int = 5555
+    prompt: str = ""
 
     normalization_mapping: dict[FeatureType, NormalizationMode] = field(
         default_factory=lambda: {
@@ -29,25 +31,41 @@ class GROOTPolicyConfig(PolicyConfig):
 
     @property
     def observation_relative_indices(self) -> list:
-        raise NotImplementedError("GR00T is trained in an external repo")
+        return [0]
 
     @property
     def action_relative_indices(self) -> list:
-        raise NotImplementedError("GR00T is trained in an external repo")
+        return [0]
     
-    """
-    Here you can configure a default optimizer for your policy, which is used when no optimizer
-    is configured in the training config
-    """
-    def get_default_optimizer(self) -> OptimizerConfig:
-        raise NotImplementedError("GR00T is trained in an external repo")
+    # """
+    # Here you can configure a default optimizer for your policy, which is used when no optimizer
+    # is configured in the training config
+    # """
+    # def get_default_optimizer(self) -> OptimizerConfig:
+    #     raise NotImplementedError("GR00T is trained in an external repo")
 
-    """
-    Here you can configure a default scheduler for your policy, which is used when no scheduler
-    is configured in the training config
-    """
-    def get_default_scheduler(self) -> LRSchedulerConfig | None:
-        raise NotImplementedError("GR00T is trained in an external repo")
+    # """
+    # Here you can configure a default scheduler for your policy, which is used when no scheduler
+    # is configured in the training config
+    # """
+    # def get_default_scheduler(self) -> LRSchedulerConfig | None:
+    #     raise NotImplementedError("GR00T is trained in an external repo")
+
+    def get_default_optimizer(self):
+        from incar.extensions.native.optimizers import AdamConfig
+        return AdamConfig(
+            lr = 1e-4,
+            betas = (0.95, 0.999),
+            eps = 1e-8,
+            weight_decay= 1e-6 
+        )
+    
+    def get_default_scheduler(self):
+        from incar.extensions.native.schedulers import DiffuserSchedulerConfig
+        return DiffuserSchedulerConfig(
+            name="cosine",
+            num_warmup_steps=500
+        )
 
     """
     This can be used to validate that the features specified in the config are compatible with the policy implementation. 
@@ -66,7 +84,7 @@ class GROOTPolicyConfig(PolicyConfig):
         pass
     
     def build_policy(self, stats):
-        raise NotImplementedError("GR00T is trained in an external repo")
+        return PolicyClientMarker(self) # Let's training know training is done externally.
     
     def build_policy_from_existing_model(self, model_path):
         return GROOTPolicy(self)
@@ -134,7 +152,7 @@ class GROOTPolicy(BasePolicy):
             "state": {},
             "video": {},
             "language": {
-                "annotation.human.task_description": [["Take a sample from the right bottle and deposit it in the left bottle"]]
+                "annotation.human.task_description": [[self.config.prompt]]
             }
         }
         for key in self.config.image_features.keys():
