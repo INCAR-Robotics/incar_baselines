@@ -16,7 +16,9 @@ s2 = [
 ]
 gr00t = [
     "zmq",
-    "msgpack"
+    "msgpack",
+    "jsonlines",
+    "pyarrow"
 ]
 
 [tool.setuptools]

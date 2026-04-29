@@ -9,8 +9,6 @@ from incar.extensions.ai import BasePolicy, LRSchedulerConfig, OptimizerConfig, 
 from incar.extensions.ai import PolicyClientMarker
 from incar.common import FeatureType, ProcessHook
 
-from .nvidia.policy_client import PolicyClient
-
 @PolicyConfig.register_subclass("gr00t")
 @dataclass
 class GROOTPolicyConfig(PolicyConfig):
@@ -102,7 +100,13 @@ class GROOTPolicy(BasePolicy):
         dataset_stats: dict[str, dict[str, torch.Tensor]] | None = None
     ):
         super().__init__(config, dataset_stats)
-        self._policy = PolicyClient(host="localhost", port=5555)
+
+        try:
+            from .nvidia.policy_client import PolicyClient
+            self._policy = PolicyClient(host="localhost", port=5555)
+        except ImportError:
+            raise ImportError("GR00T policy client requires additional dependencies. Please install the 'gr00t' extra, e.g. pip install incar[gr00t]")
+
         if not self._policy.ping():
             raise RuntimeError("Could not Connect to policy server! Reload the scenario to try connect again. Esnure that the server is running")
         self._queues = {}

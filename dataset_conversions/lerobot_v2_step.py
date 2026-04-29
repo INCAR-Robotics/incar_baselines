@@ -6,10 +6,8 @@ from pathlib import Path
 from typing import List
 
 import h5py
-import jsonlines
 import numpy as np
-import pyarrow
-import pyarrow.parquet as pq
+
 from tqdm import tqdm
 
 from incar.common import FeatureType, ProcessHook
@@ -26,6 +24,14 @@ class LeRobotV2Conversion(ProcessStep):
     task: str = ""
     hooks: List[ProcessHook] = field(default_factory=lambda: [ProcessHook.DATASET])
 
+    def __post_init__(self):
+        try:
+            import pyarrow
+            import pyarrow.parquet as pq
+            import jsonlines
+        except ImportError:
+            raise ImportError("LeRobot v2 conversion step requires additional dependencies. Please install the 'gr00t' extra, e.g. pip install incar[gr00t]")
+        
     def _new_feature_name(self, feature, original_name: str) -> str:
         if feature.type == FeatureType.VISUAL:
             return "observation.images." + original_name
@@ -36,6 +42,10 @@ class LeRobotV2Conversion(ProcessStep):
         return None
 
     def _convert_demo(self, demo_folder: str, demo_idx: int, incar_root: Path, lerobot_root: Path, config: DatasetConfig):
+        import pyarrow
+        import pyarrow.parquet as pq
+        import jsonlines
+        
         with open(incar_root / demo_folder / "meta.json", "r") as f:
             incar_meta = json.load(f)
 
@@ -110,6 +120,8 @@ class LeRobotV2Conversion(ProcessStep):
             })
 
     def process_dataset(self, root_path: str, config: DatasetConfig) -> None:
+        import jsonlines
+
         incar_root = Path(root_path)
         lerobot_root = incar_root.parent.parent / "datasets_lerobot" / incar_root.name
         lerobot_root.mkdir(parents=True, exist_ok=True)
