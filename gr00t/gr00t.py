@@ -144,13 +144,10 @@ class GROOTPolicy(BasePolicy):
             # print(f"Key: {key}, shape after stack: {obs[key].shape}")
             if key not in self.config.input_features.keys():
                 continue
-            if key == "left.arm.ee.pose":
-                obs[key] = obs[key][:, :6]
             if self.config.input_features[key].type is FeatureType.VISUAL:
                 obs[key] = obs[key].permute(0,2,3,1).unsqueeze(0).type(torch.uint8).to(self.config.device)
             else:
                 obs[key] = obs[key].unsqueeze(0).type(torch.float32).to(self.config.device)
-            print(f"Key: {key}, shape after adding batch dimension: {obs[key].shape}")
 
         groot_obs = {
             "state": {},
@@ -171,8 +168,6 @@ class GROOTPolicy(BasePolicy):
             action_dict[key] = value.squeeze()
             if action_dict[key].ndim == 1: 
                 action_dict[key] = np.expand_dims(action_dict[key], -1)
-
-            print(f"Action key: {key}, shape: {action_dict[key].shape}")
 
         return action_dict
     
