@@ -90,9 +90,9 @@ class DatasetConverter:
         for feature in self.config.features.keys():
             if self.config.features[feature].type == FeatureType.STATE:
                 demo_data["observation.state"].append(demo_data.pop(feature))
-                print(f"Appended state feature {feature} to observation.state")
+                # print(f"Appended state feature {feature} to observation.state")
             if self.config.features[feature].type == FeatureType.ACTION:
-                print(f"Appended action feature {feature} to action")
+                # print(f"Appended action feature {feature} to action")
                 demo_data["action"].append(demo_data.pop(feature))
         demo_data["observation.state"] = list(np.concatenate(demo_data["observation.state"], axis=-1))
         demo_data["action"] = list(np.concatenate(demo_data["action"], axis=-1))

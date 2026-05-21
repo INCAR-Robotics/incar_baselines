@@ -137,7 +137,7 @@ class DiffusionConfig(PolicyConfig):
     crop_shape: tuple[int, int] | None = None
     crop_is_random: bool = True
     # pretrained_backbone_weights: str | None = None
-    # use_group_norm: bool = True
+    use_group_norm: bool = True
     imagenet_norm: bool = False
     spatial_softmax_num_keypoints: int = 32
     use_separate_rgb_encoder_per_camera: bool = False

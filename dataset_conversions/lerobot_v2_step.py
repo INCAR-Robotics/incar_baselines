@@ -166,6 +166,18 @@ class LeRobotV2Conversion(ProcessStep):
         with jsonlines.open(lerobot_root / "meta" / "tasks.jsonl", mode="w") as writer:
             writer.write({"task_index": 0, "task": self.task})
 
+        # Truncate per-episode jsonl files so re-running the conversion doesn't
+        # append duplicate rows on top of a previous run.
+        for fname in ("episodes.jsonl", "episodes_stats.jsonl"):
+            (lerobot_root / "meta" / fname).write_text("")
+
+        # Clear data/ and videos/ so stale parquets/mp4s from a previous, larger
+        # run can't outnumber the episodes we're about to write.
+        for sub in ("data", "videos"):
+            sub_path = lerobot_root / sub
+            if sub_path.exists():
+                shutil.rmtree(sub_path)
+
         self._total_frames = 0
 
         if len(subfolders) > 1000:
