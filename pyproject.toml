@@ -1,7 +1,7 @@
 
 [project]
 name = "incar_baselines"
-version = "1.0.1"
+version = "1.0.2"
 dependencies = [
     "diffusers",
     "einops"
@@ -16,7 +16,7 @@ s2 = [
 ]
 gr00t = [
     "zmq",
-    "msgpack",
+    "msgpack_numpy",
     "jsonlines",
     "pyarrow"
 ]

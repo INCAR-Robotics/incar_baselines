@@ -161,6 +161,8 @@ class GROOTPolicy(BasePolicy):
         for key in self.config.state_features.keys():
             groot_obs['state'][key] = obs[key].cpu().numpy() # Shape (Batch, ObsHorizon, D)
 
+        print(groot_obs)
+
         action_dict, info = self._policy.get_action(groot_obs) # each key in self.action has Shape: (Batch, ObsHorizon, D)
 
         # Send back to CPU and ensure correct shape
