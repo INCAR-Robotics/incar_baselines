@@ -1,7 +1,7 @@
 
 [project]
 name = "incar_baselines"
-version = "1.0.2"
+version = "1.0.3"
 dependencies = [
     "diffusers",
     "einops"
@@ -21,8 +21,8 @@ gr00t = [
     "pyarrow"
 ]
 
-[tool.setuptools]
-packages = ["incar_baselines_ai", "s2_processing", "gr00t", "dataset_conversions"]
+[tool.setuptools.packages.find]
+include = ["incar_baselines_ai", "s2_processing", "gr00t*", "dataset_conversions"]
 
 [project.entry-points.'incar_extensions.processing']
 s2_processing = 's2_processing'
