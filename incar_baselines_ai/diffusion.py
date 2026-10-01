@@ -39,7 +39,6 @@ import torch.nn.functional as F
 import torchvision
 from diffusers.schedulers.scheduling_ddim import DDIMScheduler
 
-
 @PolicyConfig.register_subclass("diffusion")
 @dataclass
 class DiffusionConfig(PolicyConfig):
@@ -655,6 +654,7 @@ class MultiImageObsEncoder(nn.Module):
         self.key_shape_map = key_shape_map
 
         self.image_saving_counter = 0
+        self.n_obs_steps = config.n_obs_steps
 
     def forward(self, obs_dict):
         batch_size = None
@@ -671,23 +671,30 @@ class MultiImageObsEncoder(nn.Module):
                     assert batch_size == img.shape[0]
                 assert img.shape[1:] == self.key_shape_map[key]
 
-                # folder = "debug_frames_inference"
-                # if self.training:
-                #     folder = "debug_frames_training"
-                # print(f"saving img: {img.shape}")
-                # unnormalized_img_one = img[0].cpu().numpy().transpose(1,2,0)*255
-                # unnormalized_img_one = cv2.cvtColor(unnormalized_img_one, cv2.COLOR_RGB2BGR)
-                # cv2.imwrite(f'/home/incar/incar_ws/{folder}/{key}_{self.image_saving_counter}_o{0}.png', unnormalized_img_one)
-                # if img.shape[0] > 1:
-                #     unnormalized_img_two = img[1].cpu().numpy().transpose(1,2,0)*255
-                #     unnormalized_img_two = cv2.cvtColor(unnormalized_img_two, cv2.COLOR_RGB2BGR)
-                #     cv2.imwrite(f'/home/incar/incar_ws/{folder}/{key}_{self.image_saving_counter}_o{1}.png', unnormalized_img_two)
-                # print("saved img")
-                # self.image_saving_counter += 1
+                # folder = "debug_frames_training" if self.training else "debug_frames_inference"
+                # # obs_dict is reshaped (B, To) -> (B*To) upstream, so entry e's
+                # # observation window is img[e*To : e*To+To]. Save two batch entries x
+                # # all obs steps x all cameras so the per-sample jitter can be
+                # # inspected: it should match across cameras and obs steps within an
+                # # entry, but differ between entries (b0 vs b1). All cameras of this
+                # # forward share one counter, incremented after the loop.
+                # To = self.n_obs_steps
+                # for e in (0, 1):
+                #     for o in range(To):
+                #         idx = e * To + o
+                #         if idx >= img.shape[0]:
+                #             continue
+                #         frame = img[idx].cpu().numpy().transpose(1, 2, 0) * 255
+                #         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+                #         cv2.imwrite(
+                #             f'/home/incar/incar_ws/{folder}/{key}_{self.image_saving_counter}_b{e}_o{o}.png',
+                #             frame,
+                #         )
 
                 img = self.key_transform_map[key](img)
-                
+
                 imgs.append(img)
+            self.image_saving_counter += 1
             # (N*B,C,H,W)
             imgs = torch.cat(imgs, dim=0)
             # (N*B,D)

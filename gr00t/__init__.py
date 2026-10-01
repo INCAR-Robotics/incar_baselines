@@ -1,1 +1,1 @@
-from .gr00t import GROOTPolicyConfig
+from .gr00t import GROOTPolicyConfig, GROOTPolicyConfig16
