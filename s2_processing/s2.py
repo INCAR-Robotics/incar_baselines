@@ -13,6 +13,7 @@ from tqdm import tqdm
 if TYPE_CHECKING:
     import cv2
 
+from incar.ai.device_utils import resolve_device
 from incar.common import FeatureType, ProcessHook
 from incar.utils import serialize_dict
 from incar.extensions.processing_step import ProcessStep
@@ -195,10 +196,11 @@ class GroundedSAM(ProcessStep):
             raise ImportError("OpenCV is not installed, which is required for the Grounded SAM processing step. Please install it with 'pip install opencv-python'")
         from transformers import AutoProcessor, AutoModelForZeroShotObjectDetection
 
-        self.sam2_predictor = SAM2ImagePredictor.from_pretrained(self.sam2_model_id)
+        self.device = resolve_device(None)
+        self.sam2_predictor = SAM2ImagePredictor.from_pretrained(self.sam2_model_id, device=self.device)
 
         self.processor = AutoProcessor.from_pretrained(self.grounding_dino_model_id)
-        self.grounding_model = AutoModelForZeroShotObjectDetection.from_pretrained(self.grounding_dino_model_id).to("cuda")
+        self.grounding_model = AutoModelForZeroShotObjectDetection.from_pretrained(self.grounding_dino_model_id).to(self.device)
 
         self.prompt = ""
         for p in self.prompts:
@@ -266,7 +268,7 @@ class GroundedSAM(ProcessStep):
         image = self._to_pil_rgb(image)
 
         self.sam2_predictor.set_image(image)
-        inputs = self.processor(images=image, text=self.prompt, return_tensors="pt").to("cuda")
+        inputs = self.processor(images=image, text=self.prompt, return_tensors="pt").to(self.device)
         with torch.no_grad():
             outputs = self.grounding_model(**inputs)
         grounding_results = self.processor.post_process_grounded_object_detection(
@@ -283,7 +285,7 @@ class GroundedSAM(ProcessStep):
             return self.nothing_found_frame(image)
         # TODO: filter boxes
 
-        with torch.inference_mode(), torch.autocast("cuda", dtype=torch.bfloat16):
+        with torch.inference_mode(), torch.autocast(torch.device(self.device).type, dtype=torch.bfloat16):
             masks, scores, logits = self.sam2_predictor.predict(
                 point_coords=None,
                 point_labels=None,
