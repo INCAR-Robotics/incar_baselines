@@ -3,6 +3,9 @@
 name = "incar_baselines"
 version = "1.0.6"
 readme = "README.md"
+authors = [
+    { name = "Jonne van Haastregt", email = "jonne.vanhaastregt@incar-robotics.se" },
+]
 license = "LicenseRef-INCAR-Proprietary"
 license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
 dependencies = [
