@@ -1,0 +1,23 @@
+INCAR Robotics AB — Proprietary Software License
+
+Copyright (c) 2026 INCAR Robotics AB. All rights reserved.
+
+This software ("incar_baselines") and its accompanying documentation are the
+proprietary and confidential property of INCAR Robotics AB ("INCAR").
+No license or other right is granted to you except as expressly set out in a
+written agreement between you and INCAR (or its authorised reseller). Without
+such an agreement, you may not use, copy, modify, merge, publish, distribute,
+sublicense, sell, reverse engineer, decompile or disassemble this software, or
+create derivative works from it, in whole or in part.
+
+Third-party components. Portions of this software are derived from or bundle
+third-party open-source software, which remains under its own license and
+copyright. Those components are NOT covered by the proprietary terms above;
+they are identified, with their license texts, in THIRD_PARTY_NOTICES.md,
+which is distributed with this software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL INCAR
+BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR ITS USE.
