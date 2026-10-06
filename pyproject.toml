@@ -1,7 +1,7 @@
 
 [project]
 name = "incar_baselines"
-version = "1.0.5"
+version = "1.0.6"
 readme = "README.md"
 license = "LicenseRef-INCAR-Proprietary"
 license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]

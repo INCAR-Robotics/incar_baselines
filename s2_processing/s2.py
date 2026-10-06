@@ -90,7 +90,7 @@ class DepthAnythingV3(ProcessStep):
 
             os.mkdir(target_feature_path)
             container = av.open(target_feature_path / "data.mp4", 'w')
-            stream = container.add_stream('libx264', fractions.Fraction(config.video_fps))
+            stream = container.add_stream('vp9', fractions.Fraction(config.video_fps))
             stream.height = frames[0].shape[0]
             stream.width = frames[0].shape[1]
 
@@ -234,7 +234,7 @@ class GroundedSAM(ProcessStep):
                 processed_frames.append(self.operation(frame))
 
             container = av.open(target_feature_path / "data.mp4", 'w')
-            stream = container.add_stream('libx264', fractions.Fraction(config.video_fps))
+            stream = container.add_stream('vp9', fractions.Fraction(config.video_fps))
             stream.height = frames[0].shape[0]
             stream.width = frames[0].shape[1]
 
@@ -397,7 +397,7 @@ class CombineSingleChannels(ProcessStep):
                     processed_frames.append(self.operation(first_frames[i], second_frames[i], None))
 
             container = av.open(target_feature_path / "data.mp4", 'w')
-            stream = container.add_stream('libx264', fractions.Fraction(config.video_fps))
+            stream = container.add_stream('vp9', fractions.Fraction(config.video_fps))
             stream.height = first_frames[0].shape[0]
             stream.width = first_frames[0].shape[1]
 
