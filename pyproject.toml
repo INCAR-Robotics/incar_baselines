@@ -1,7 +1,7 @@
 
 [project]
 name = "incar_baselines"
-version = "1.0.6"
+version = "1.0.7"
 readme = "README.md"
 authors = [
     { name = "Jonne van Haastregt", email = "jonne.vanhaastregt@incar-robotics.se" },
